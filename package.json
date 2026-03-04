@@ -1,0 +1,42 @@
+{
+  "name": "ultimate-image-converter",
+  "version": "0.9.0",
+  "license": "WTFPL",
+  "type": "module",
+  "scripts": {
+    "dev": "ng serve",
+    "build": "ng build",
+    "preview": "ng serve --configuration=production"
+  },
+  "dependencies": {
+    "@angular/animations": "^19.0.0",
+    "@angular/common": "^19.0.0",
+    "@angular/compiler": "^19.0.0",
+    "@angular/core": "^19.0.0",
+    "@angular/forms": "^19.0.0",
+    "@angular/platform-browser": "^19.0.0",
+    "@angular/router": "^19.0.0",
+    "@imgly/background-removal": "^1.7.0",
+    "cropperjs": "^1.6.2",
+    "heic2any": "^0.0.4",
+    "jspdf": "^4.2.0",
+    "jszip": "^3.10.1",
+    "onnxruntime-web": "^1.24.2",
+    "piexifjs": "^1.0.6",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^19.0.0",
+    "@angular/cli": "^19.0.0",
+    "@angular/compiler-cli": "^19.0.0",
+    "@types/cropperjs": "^1.1.5",
+    "@types/node": "^22.0.0",
+    "@types/piexifjs": "^1.0.0",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "~5.6.2"
+  }
+}

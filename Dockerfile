@@ -1,0 +1,28 @@
+# Stage 1: Build the Angular application
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --legacy-peer-deps
+
+COPY . .
+RUN npm run build -- --configuration=production
+
+# Stage 2: Serve the application using a Node.js server
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install 'serve' globally
+RUN npm install -g serve
+
+# Copy the build artifacts from the build stage
+# Note: Angular outputs to /app/dist (based on angular.json config)
+COPY --from=build /app/dist ./dist
+
+EXPOSE 80
+
+# Start 'serve' on port 80, explicitly binding to all interfaces (0.0.0.0)
+# This fixes the "Connection Reset" or "Empty Response" issues caused by listening only on localhost
+CMD ["serve", "-s", "dist", "-l", "tcp://0.0.0.0:80"]

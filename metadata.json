@@ -1,0 +1,5 @@
+{
+  "name": "Ultimate Image Converter",
+  "description": "A powerful, client-side tool to convert images between various formats like PNG, JPG, WEBP, and more. Upload your file, choose an output format, and download the result instantly.",
+  "requestFramePermissions": []
+}

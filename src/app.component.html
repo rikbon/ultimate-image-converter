@@ -1,0 +1,1220 @@
+<main class="min-h-screen w-full flex flex-col items-center p-4 sm:p-6 md:p-8">
+  <div class="w-full max-w-6xl mx-auto">
+    <!-- Header -->
+    <header class="text-center mb-8 md:mb-12">
+      <h1
+        class="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-300 mb-2">
+        Ultimate Image Converter
+      </h1>
+      <p class="text-lg text-slate-400">
+        Fast, secure, and entirely client-side v0.9.0
+      </p>
+      <button (click)="openHelpModal()"
+        class="mt-4 px-3 py-1.5 text-sm font-medium rounded-full bg-slate-800 text-sky-400 hover:bg-slate-700 transition-colors inline-flex items-center gap-2 border border-slate-700">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        How to Use
+      </button>
+    </header>
+
+    <!-- Mode Selector -->
+    <div class="flex justify-center mb-8">
+      <div class="flex items-center gap-1 p-1 rounded-lg bg-slate-800/60 border border-slate-700">
+        <button (click)="setConversionMode('single')"
+          [class]="'px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ' + (conversionMode() === 'single' ? 'bg-sky-500 text-white shadow' : 'text-slate-300 hover:bg-slate-700/50')">
+          Single File
+        </button>
+        <button (click)="setConversionMode('batch')"
+          [class]="'px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ' + (conversionMode() === 'batch' ? 'bg-sky-500 text-white shadow' : 'text-slate-300 hover:bg-slate-700/50')">
+          Batch Conversion
+        </button>
+      </div>
+    </div>
+
+    <!-- Shared Hidden File Input -->
+    <input #fileInput type="file" (change)="onFileSelected($event)" class="hidden"
+      [accept]="supportedInputTypes.join(',')" [multiple]="conversionMode() === 'batch'" />
+
+    <!-- Error Message -->
+    @if (errorMessage()) {
+    <div
+      class="w-full max-w-2xl mx-auto my-4 p-4 text-center bg-red-900/50 border border-red-700 text-red-300 rounded-lg">
+      <p>{{ errorMessage() }}</p>
+    </div>
+    }
+
+    <!-- SINGLE FILE MODE -->
+    @if (conversionMode() === 'single') {
+    @if (!originalFile()) {
+    <div class="w-full max-w-xl mx-auto">
+      <div (click)="triggerFileInput()"
+        (dragover)="$event.preventDefault(); $event.stopPropagation(); $event.dataTransfer.dropEffect = 'copy'"
+        (drop)="$event.preventDefault(); $event.stopPropagation(); onFileSelected($event)"
+        class="flex flex-col items-center justify-center w-full h-64 border-2 border-slate-600 border-dashed rounded-lg cursor-pointer bg-slate-800/50 hover:bg-slate-700/50 transition-colors duration-300">
+        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+          <svg class="w-10 h-10 mb-4 text-slate-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 20 16">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+          </svg>
+          <p class="mb-2 text-sm text-slate-400"><span class="font-semibold text-sky-400">Click to upload</span> or drag
+            and drop</p>
+          <p class="text-xs text-slate-500">PNG, JPG, GIF, WEBP, TIFF</p>
+        </div>
+      </div>
+    </div>
+    } @else {
+    <div class="w-full">
+      <!-- View Mode Toggle -->
+      <div class="flex justify-center md:justify-end mb-4">
+        <div class="flex items-center gap-1 p-1 rounded-lg bg-slate-800/60 border border-slate-700">
+          <button (click)="compareMode.set(false)"
+            [class]="'px-3 py-1.5 text-xs font-semibold rounded-md transition-colors duration-200 ' + (!compareMode() ? 'bg-sky-500 text-white shadow' : 'text-slate-300 hover:bg-slate-700/50')">
+            Side-by-Side
+          </button>
+          <button (click)="compareMode.set(true)"
+            [class]="'px-3 py-1.5 text-xs font-semibold rounded-md transition-colors duration-200 ' + (compareMode() ? 'bg-sky-500 text-white shadow' : 'text-slate-300 hover:bg-slate-700/50')">
+            Compare Slider
+          </button>
+        </div>
+      </div>
+
+      <!-- Image Previews -->
+      @if (!compareMode()) {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-8">
+        <!-- Original Image -->
+        <div class="flex flex-col">
+          <h2 class="text-2xl font-bold text-slate-300 mb-4 text-center">Original Image</h2>
+          @if (originalImageInfo(); as info) {
+          <div
+            class="w-full flex justify-between text-sm text-slate-300 bg-slate-900/40 rounded-md p-2 mb-4 border border-slate-700">
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24"
+                stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375" />
+              </svg>
+              <span>{{ info.size }}</span>
+            </span>
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24"
+                stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0L15 15m-6 0l-5.25 5.25m5.25-5.25L3.75 20.25" />
+              </svg>
+              <span>{{ info.resolution }}</span>
+            </span>
+          </div>
+          }
+          <div
+            class="w-full aspect-square rounded-lg bg-slate-800/50 flex items-center justify-center overflow-hidden border border-slate-700">
+            <img [src]="originalImageSrc()" alt="Original Image"
+              class="max-w-full max-h-full object-contain transition-transform duration-200 hover:scale-105" />
+          </div>
+          @if(originalExifDataDisplay(); as exifData) {
+          @if (exifData.length > 0) {
+          <div class="mt-4">
+            <h3 class="text-lg font-semibold text-slate-300 mb-2">Image Metadata (EXIF)</h3>
+            <div class="h-48 overflow-y-auto bg-slate-900/50 border border-slate-700 rounded-md p-3 text-xs">
+              <dl>
+                @for(item of exifData; track item[0]) {
+                <div class="grid grid-cols-2 gap-2 py-1 border-b border-slate-800">
+                  <dt class="font-medium text-slate-400 truncate" [title]="item[0]">{{ item[0] }}</dt>
+                  <dd class="text-slate-200 truncate" [title]="item[1]">{{ item[1] }}</dd>
+                </div>
+                }
+              </dl>
+            </div>
+          </div>
+          }
+          }
+        </div>
+
+        <!-- Converted Image -->
+        <div class="flex flex-col">
+          <h2 class="text-2xl font-bold text-slate-300 mb-4 text-center">Converted Image</h2>
+          @if (convertedImageInfo(); as info) {
+          <div
+            class="w-full flex justify-between text-sm text-slate-300 bg-slate-900/40 rounded-md p-2 mb-4 border border-slate-700">
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24"
+                stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375" />
+              </svg>
+              <span>{{ info.size }}</span>
+            </span>
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24"
+                stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0L15 15m-6 0l-5.25 5.25m5.25-5.25L3.75 20.25" />
+              </svg>
+              <span>{{ info.resolution }}</span>
+            </span>
+          </div>
+          } @else {
+          <div class="w-full h-[44px] mb-4"></div>
+          }
+          <div
+            class="w-full aspect-square rounded-lg bg-slate-800/50 flex items-center justify-center overflow-hidden border border-slate-700">
+            @if (isConverting()) {
+            <div class="flex flex-col items-center text-slate-400">
+              <svg class="animate-spin h-8 w-8 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+              </svg>
+              <span class="mt-2 text-sm">Converting...</span>
+            </div>
+            } @else if (convertedImageSrc()) {
+            <img [src]="convertedImageSrc()" alt="Converted Image"
+              class="max-w-full max-h-full object-contain transition-transform duration-200 hover:scale-105" />
+            } @else {
+            <div class="text-slate-500 text-center p-4">
+              <p>Your converted image will appear here.</p>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+      } @else {
+      <!-- Compare Slider View -->
+      <div class="w-full max-w-4xl mx-auto mb-8 flex flex-col items-center">
+        <h2 class="text-2xl font-bold text-slate-300 mb-4 text-center">Interactive Compare</h2>
+        <div
+          class="relative w-full aspect-square md:aspect-video rounded-lg bg-slate-800/50 border border-slate-700 select-none flex items-center justify-center overflow-hidden">
+          @if (isConverting()) {
+          <div
+            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 z-50 bg-slate-900/50 backdrop-blur-sm">
+            <svg class="animate-spin h-8 w-8 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+              viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
+            </svg>
+            <span class="mt-2 text-sm">Converting...</span>
+          </div>
+          }
+          <!-- Original Image (Background) -->
+          <img [src]="originalImageSrc()" alt="Original Image"
+            class="absolute w-full h-full object-contain pointer-events-none" />
+
+          <!-- Converted Image (Foreground) -->
+          @if (convertedImageSrc()) {
+          <img [src]="convertedImageSrc()" alt="Converted Image"
+            class="absolute w-full h-full object-contain pointer-events-none"
+            [style.clip-path]="'polygon(0 0, ' + sliderPosition() + '% 0, ' + sliderPosition() + '% 100%, 0 100%)'" />
+          }
+
+          <!-- Slider Range Input -->
+          <input type="range" min="0" max="100" [value]="sliderPosition()"
+            (input)="sliderPosition.set($any($event.target).value)"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20 m-0" />
+
+          <!-- Visual Slider Handle -->
+          <div class="absolute top-0 bottom-0 w-1 bg-sky-400 pointer-events-none z-10 shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+            [style.left.%]="sliderPosition()">
+            <div
+              class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-sky-500 rounded-full border-2 border-white flex items-center justify-center shadow-lg text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"
+                  transform="rotate(90 12 12)" />
+              </svg>
+            </div>
+          </div>
+
+          <div
+            class="absolute bottom-4 left-4 bg-black/60 text-white px-2 py-1 rounded text-xs pointer-events-none backdrop-blur-md">
+            Converted Image</div>
+          <div
+            class="absolute bottom-4 right-4 bg-black/60 text-white px-2 py-1 rounded text-xs pointer-events-none backdrop-blur-md">
+            Original Image</div>
+        </div>
+      </div>
+      }
+
+      <!-- Controls -->
+      <div class="w-full max-w-3xl mx-auto bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+        <!-- Format Selector -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-slate-300 mb-2">Output Format</label>
+          <div class="flex gap-2">
+            @for (format of availableOutputFormats(); track format.format) {
+            <button (click)="setOutputFormat(format.format)"
+              [class]="'px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200 flex-grow ' + (outputFormat() === format.format ? 'bg-sky-500 text-white shadow' : 'bg-slate-700 text-slate-300 hover:bg-slate-600')">
+              {{ format.label }}
+            </button>
+            }
+          </div>
+        </div>
+
+        <!-- Quality Sliders -->
+        <div class="mb-6">
+          @if (outputFormat() === 'jpeg') {
+          <label for="jpeg-quality" class="block text-sm font-medium text-slate-300 mb-2">JPEG Quality: <span
+              class="font-bold text-sky-400">{{ jpegQuality() * 100 | number:'1.0-0' }}%</span></label>
+          <input id="jpeg-quality" type="range" min="0.1" max="1" step="0.01" [value]="jpegQuality()"
+            (input)="onQualityChange($event, 'jpeg')"
+            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+          }
+          @if (outputFormat() === 'webp') {
+          <label for="webp-quality" class="block text-sm font-medium text-slate-300 mb-2">WEBP Quality: <span
+              class="font-bold text-sky-400">{{ webpQuality() * 100 | number:'1.0-0' }}%</span></label>
+          <input id="webp-quality" type="range" min="0.1" max="1" step="0.01" [value]="webpQuality()"
+            (input)="onQualityChange($event, 'webp')"
+            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+          }
+          @if (outputFormat() === 'avif') {
+          <label for="avif-quality" class="block text-sm font-medium text-slate-300 mb-2">AVIF Quality: <span
+              class="font-bold text-sky-400">{{ avifQuality() * 100 | number:'1.0-0' }}%</span></label>
+          <input id="avif-quality" type="range" min="0.1" max="1" step="0.01" [value]="avifQuality()"
+            (input)="onQualityChange($event, 'avif')"
+            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+          <p class="text-xs text-slate-500 mt-1">AVIF offers superior compression. Higher quality retains more detail
+            but takes longer to process.</p>
+          }
+          @if (outputFormat() === 'png') {
+          <label for="png-compression" class="block text-sm font-medium text-slate-300 mb-2">PNG Compression Effort:
+            <span class="font-bold text-sky-400">{{ pngCompressionLevel() * 10 | number:'1.0-0' }}</span></label>
+          <input id="png-compression" type="range" min="0" max="1" step="0.1" [value]="pngCompressionLevel()"
+            (input)="onQualityChange($event, 'png')"
+            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+          <p class="text-xs text-slate-500 mt-1">Higher values mean smaller file size but slower conversion. Does not
+            affect image quality.</p>
+          }
+
+          @if (outputFormat() === 'jpeg' || outputFormat() === 'webp' || outputFormat() === 'avif') {
+          <div class="mt-5 pt-4 border-t border-slate-700">
+            <label class="flex items-center space-x-2 text-sm font-medium text-slate-300 cursor-pointer mb-3">
+              <input type="checkbox" [checked]="autoCompressEnabled()" (change)="onAutoCompressEnabledChange($event)"
+                class="w-4 h-4 rounded bg-slate-800 border-slate-600 text-sky-500 focus:ring-sky-500 focus:ring-offset-slate-900">
+              <span class="font-semibold text-sky-300">Target Auto-Compress <span
+                  class="text-xs text-slate-500 font-normal ml-1">(File Size Target)</span></span>
+            </label>
+            @if (autoCompressEnabled()) {
+            <div class="flex items-center space-x-3 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+              <input type="number" min="1" placeholder="e.g. 200" [value]="targetFileSizeKB() || ''"
+                (input)="onTargetFileSizeChange($event)"
+                class="w-full bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded-md focus:ring-sky-500 focus:border-sky-500 block p-2 transition-colors">
+              <span class="text-sm text-slate-400 font-bold">KB</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-2 ml-1 leading-relaxed">Overrides the quality slider to find the
+              best possible visual quality that stays under this file size.</p>
+            }
+          </div>
+          }
+        </div>
+
+        <!-- Crop Section -->
+        <div class="mb-6">
+          <div class="border-b border-slate-700 pb-2 mb-3">
+            <h3 class="block text-lg font-medium text-slate-300">Crop Image</h3>
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <p class="text-sm text-slate-400">Click the button to open the interactive editor. Drag the handles to draw
+              a box around the area you want to keep.</p>
+            <div class="flex gap-2">
+              @if (cropData()) {
+              <button (click)="resetCrop()"
+                class="px-3 py-1.5 text-sm font-medium rounded-md text-red-400 bg-red-400/10 hover:bg-red-400/20 transition-colors border border-red-500/20">
+                Remove Crop
+              </button>
+              }
+              <button (click)="openCropModal()"
+                class="px-4 py-1.5 text-sm font-medium rounded-md text-slate-900 bg-sky-400 hover:bg-sky-300 transition-colors shadow-[0_0_15px_rgba(56,189,248,0.4)] whitespace-nowrap">
+                {{ cropData() ? 'Edit Crop' : 'Open Crop Editor' }}
+              </button>
+            </div>
+          </div>
+          @if (cropData()) {
+          <p
+            class="mt-2 text-xs text-sky-400 font-medium bg-sky-900/20 inline-block px-2 py-1 rounded border border-sky-500/20">
+            ✨ Crop applied: {{ cropData()?.width | number:'1.0-0' }} x {{ cropData()?.height | number:'1.0-0' }} pixels
+          </p>
+          }
+        </div>
+
+        <!-- Resize Section -->
+        <div class="mb-6">
+          <div class="border-b border-slate-700 pb-2 mb-3">
+            <div class="flex items-center">
+              <input id="resize-enabled" type="checkbox" [checked]="resizeEnabled()"
+                (change)="onResizeEnabledChange($event)"
+                class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-600 focus:ring-sky-600 accent-sky-500">
+              <label for="resize-enabled" class="ml-3 block text-lg font-medium text-slate-300">Resize Image</label>
+            </div>
+          </div>
+          @if (resizeEnabled()) {
+          <div class="space-y-4 pt-2">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="resize-width" class="block text-sm font-medium text-slate-400 mb-1">Width (px)</label>
+                <input id="resize-width" type="number" [value]="resizeWidth() || ''"
+                  (input)="onResizeDimensionChange($event, 'width')"
+                  class="block w-full rounded-md bg-slate-900/80 border-slate-600 text-slate-200 placeholder-slate-500 focus:ring-sky-500 focus:border-sky-500 sm:text-sm p-2.5">
+              </div>
+              <div>
+                <label for="resize-height" class="block text-sm font-medium text-slate-400 mb-1">Height (px)</label>
+                <input id="resize-height" type="number" [value]="resizeHeight() || ''"
+                  (input)="onResizeDimensionChange($event, 'height')"
+                  class="block w-full rounded-md bg-slate-900/80 border-slate-600 text-slate-200 placeholder-slate-500 focus:ring-sky-500 focus:border-sky-500 sm:text-sm p-2.5">
+              </div>
+            </div>
+            <div>
+              <div class="flex items-center">
+                <input id="maintain-aspect" type="checkbox" [checked]="maintainAspectRatio()"
+                  (change)="onMaintainAspectRatioChange($event)"
+                  class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-600 focus:ring-sky-600 accent-sky-500">
+                <label for="maintain-aspect" class="ml-3 block text-sm font-medium text-slate-300">Maintain Aspect
+                  Ratio</label>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+
+        <!-- AI Toolkit Section -->
+        <div class="mb-6">
+          <div class="border-b border-slate-700 pb-2 mb-3">
+            <h3 class="block text-lg font-medium text-slate-300">AI Toolkit</h3>
+          </div>
+          <div class="pt-2">
+            <div class="flex items-center">
+              <input id="remove-background" type="checkbox" [checked]="removeBackground()"
+                (change)="onRemoveBackgroundChange($event)"
+                class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-teal-600 focus:ring-teal-600 accent-teal-500">
+              <label for="remove-background" class="ml-3 block text-sm font-medium text-slate-300">Remove Background
+                🖼️</label>
+            </div>
+            <p class="text-xs text-slate-500 mt-1 mb-4 ml-7">Uses client-side AI to magically remove the background from
+              images (may take a few seconds on first run to load the AI model).</p>
+
+            <div class="flex items-center pt-4 border-t border-slate-700/50">
+              <input id="remove-gemini-watermark" type="checkbox" [checked]="removeGeminiWatermark()"
+                (change)="onRemoveWatermarkChange($event)"
+                class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-purple-600 focus:ring-purple-600 accent-purple-500">
+              <label for="remove-gemini-watermark" class="ml-3 block text-sm font-medium text-slate-300">Remove Gemini ✨
+                Sparkle</label>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Mathematically removes the visible Google Gemini watermark from
+              generated images losslessly.</p>
+
+            <div class="pt-4 mt-4 border-t border-slate-700/50">
+              <span class="block text-sm font-medium text-slate-300 mb-2">AI Image Upscaling (Super Resolution)</span>
+              <p class="text-xs text-slate-500 mb-3">Enhance low-resolution images directly in your browser using ONNX
+                Neural Networks (2x/4x).</p>
+              <div class="flex gap-3">
+                <button (click)="upscaleImage(2)" [disabled]="isConverting()"
+                  class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium shadow-[0_0_10px_rgba(147,51,234,0.3)] rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  Upscale 2x
+                </button>
+                <button (click)="upscaleImage(4)" [disabled]="isConverting()"
+                  class="px-4 py-2 bg-purple-700 hover:bg-purple-600 text-white text-sm font-medium shadow-[0_0_10px_rgba(126,34,206,0.3)] rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  Upscale 4x
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Watermark Section -->
+        <div class="mb-6">
+          <div class="border-b border-slate-700 pb-2 mb-3">
+            <h3 class="block text-lg font-medium text-slate-300">Custom Watermark</h3>
+          </div>
+          <div class="pt-2">
+            <div class="flex items-center mb-4">
+              <input id="add-watermark" type="checkbox" [checked]="addWatermark()"
+                (change)="onAddWatermarkChange($event)"
+                class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-600 focus:ring-sky-600 accent-sky-500">
+              <label for="add-watermark" class="ml-3 block text-sm font-medium text-slate-300">Add Watermark</label>
+            </div>
+
+            @if (addWatermark()) {
+            <div class="space-y-4 pl-7">
+              <!-- Type Selection -->
+              <div class="flex space-x-4">
+                <label class="inline-flex items-center cursor-pointer">
+                  <input type="radio" name="watermark-type" value="text" [checked]="watermarkType() === 'text'"
+                    (change)="onWatermarkTypeChange('text')"
+                    class="text-sky-500 focus:ring-sky-500 bg-slate-800 border-slate-600">
+                  <span class="ml-2 text-sm text-slate-300">Text</span>
+                </label>
+                <label class="inline-flex items-center cursor-pointer">
+                  <input type="radio" name="watermark-type" value="image" [checked]="watermarkType() === 'image'"
+                    (change)="onWatermarkTypeChange('image')"
+                    class="text-sky-500 focus:ring-sky-500 bg-slate-800 border-slate-600">
+                  <span class="ml-2 text-sm text-slate-300">Logo Image</span>
+                </label>
+              </div>
+
+              <!-- Text Settings -->
+              @if (watermarkType() === 'text') {
+              <div>
+                <label for="watermark-text" class="block text-sm font-medium text-slate-400 mb-1">Text Overlay</label>
+                <input id="watermark-text" type="text" [value]="watermarkText()" (input)="onWatermarkTextChange($event)"
+                  class="block w-full rounded-md bg-slate-800 border-slate-600 text-slate-200 placeholder-slate-500 focus:ring-sky-500 focus:border-sky-500 sm:text-sm p-2">
+              </div>
+              <div>
+                <label for="watermark-color" class="block text-sm font-medium text-slate-400 mb-1">Text Color</label>
+                <div class="flex items-center space-x-2">
+                  <input id="watermark-color" type="color" [value]="watermarkColor()"
+                    (input)="onWatermarkColorChange($event)"
+                    class="h-8 w-8 rounded cursor-pointer border-0 bg-transparent">
+                  <span class="text-sm text-slate-300 uppercase">{{ watermarkColor() }}</span>
+                </div>
+              </div>
+              }
+
+              <!-- Image Settings -->
+              @if (watermarkType() === 'image') {
+              <div>
+                <label class="block text-sm font-medium text-slate-400 mb-1">Upload Logo (PNG/WEBP)</label>
+                <input type="file" accept="image/png, image/webp" (change)="onWatermarkLogoUpload($event)"
+                  class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-sky-500/10 file:text-sky-400 hover:file:bg-sky-500/20 cursor-pointer">
+                @if (watermarkLogoUrl()) {
+                <div class="mt-2 text-xs text-sky-400">✅ Logo loaded successfully.</div>
+                }
+              </div>
+              }
+
+              <!-- Common Settings (Position & Opacity) -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="watermark-position" class="block text-sm font-medium text-slate-400 mb-1">Position</label>
+                  <select id="watermark-position" [value]="watermarkPosition()"
+                    (change)="onWatermarkPositionChange($event)"
+                    class="block w-full rounded-md bg-slate-800 border-slate-600 text-slate-200 focus:ring-sky-500 focus:border-sky-500 sm:text-sm p-2">
+                    <option value="bottom-right">Bottom Right</option>
+                    <option value="bottom-left">Bottom Left</option>
+                    <option value="center">Center</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="watermark-opacity" class="block text-sm font-medium text-slate-400 mb-1">Opacity: {{
+                    watermarkOpacity() * 100 | number:'1.0-0' }}%</label>
+                  <input id="watermark-opacity" type="range" min="0.1" max="1" step="0.05" [value]="watermarkOpacity()"
+                    (input)="onWatermarkOpacityChange($event)"
+                    class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500 mt-2">
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Image Adjustments -->
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-3 border-b border-slate-700 pb-2">
+            <h3 class="block text-lg font-medium text-slate-300">Image Adjustments</h3>
+            <div class="flex items-center gap-2">
+              <button (click)="autoEnhance()" [disabled]="isConverting()" title="Auto-Enhance (Magic Wand)"
+                class="px-2 py-1 text-xs font-semibold rounded-md text-slate-900 bg-amber-400 hover:bg-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.3)] transition-colors mr-2 flex items-center gap-1">
+                <span>✨</span> Auto-Enhance
+              </button>
+              <button (click)="undo()" [disabled]="!canUndo()" title="Undo"
+                class="p-1.5 rounded-md text-slate-400 hover:bg-slate-600 disabled:text-slate-600 disabled:bg-transparent disabled:cursor-not-allowed transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd"
+                    d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H15a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                    clip-rule="evenodd" />
+                </svg>
+              </button>
+              <button (click)="redo()" [disabled]="!canRedo()" title="Redo"
+                class="p-1.5 rounded-md text-slate-400 hover:bg-slate-600 disabled:text-slate-600 disabled:bg-transparent disabled:cursor-not-allowed transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd"
+                    d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H5a1 1 0 110-2h9.586l-4.293-4.293a1 1 0 010-1.414z"
+                    clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Transforms -->
+          <div class="mb-4 grid grid-cols-2 gap-4">
+            <div>
+              <span class="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wide">Orientation</span>
+              <div class="flex gap-2">
+                <button (click)="onRotate(-90)" title="Rotate Left 90°"
+                  class="flex-1 p-2 bg-slate-700 rounded hover:bg-slate-600 text-slate-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </button>
+                <button (click)="onRotate(90)" title="Rotate Right 90°"
+                  class="flex-1 p-2 bg-slate-700 rounded hover:bg-slate-600 text-slate-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div>
+              <span class="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wide">Flip</span>
+              <div class="flex gap-2">
+                <button (click)="onFlip('h')" title="Flip Horizontally"
+                  [class]="'flex-1 p-2 rounded hover:bg-slate-600 text-slate-300 ' + (currentAdjustments().flipH ? 'bg-sky-600' : 'bg-slate-700')">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </button>
+                <button (click)="onFlip('v')" title="Flip Vertically"
+                  [class]="'flex-1 p-2 rounded hover:bg-slate-600 text-slate-300 ' + (currentAdjustments().flipV ? 'bg-sky-600' : 'bg-slate-700')">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto rotate-90" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4 pt-2">
+            <div>
+              <label for="contrast-adjust" class="block text-sm font-medium text-slate-400 mb-1">Contrast: <span
+                  class="font-bold text-sky-400">{{ currentAdjustments().contrast >= 0 ? '+' : '' }}{{
+                  currentAdjustments().contrast }}%</span></label>
+              <input id="contrast-adjust" type="range" min="-100" max="100" step="1"
+                [value]="currentAdjustments().contrast" (input)="onContrastChange($event)"
+                class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+            </div>
+            <div>
+              <label for="saturation-adjust" class="block text-sm font-medium text-slate-400 mb-1">Saturation: <span
+                  class="font-bold text-sky-400">{{ currentAdjustments().saturation >= 0 ? '+' : '' }}{{
+                  currentAdjustments().saturation }}%</span></label>
+              <input id="saturation-adjust" type="range" min="-100" max="100" step="1"
+                [value]="currentAdjustments().saturation" (input)="onSaturationChange($event)"
+                class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+            </div>
+            <div>
+              <label for="hue-adjust" class="block text-sm font-medium text-slate-400 mb-1">Hue: <span
+                  class="font-bold text-sky-400">{{ currentAdjustments().hue >= 0 ? '+' : '' }}{{
+                  currentAdjustments().hue }}°</span></label>
+              <input id="hue-adjust" type="range" min="-180" max="180" step="1" [value]="currentAdjustments().hue"
+                (input)="onHueChange($event)"
+                class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+            </div>
+            <div>
+              <label for="vibrance-adjust" class="block text-sm font-medium text-slate-400 mb-1">Vibrance: <span
+                  class="font-bold text-sky-400">{{ currentAdjustments().vibrance >= 0 ? '+' : '' }}{{
+                  currentAdjustments().vibrance }}%</span></label>
+              <input id="vibrance-adjust" type="range" min="-100" max="100" step="1"
+                [value]="currentAdjustments().vibrance" (input)="onVibranceChange($event)"
+                class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+            </div>
+
+            <!-- New Artistic Filters -->
+            <div class="border-t border-slate-700 pt-4">
+              <span class="block text-xs font-medium text-slate-400 mb-3 uppercase tracking-wide">Artistic
+                Filters</span>
+              <div class="flex flex-wrap gap-4 mb-4">
+                <div class="flex items-center">
+                  <input id="filter-grayscale" type="checkbox" [checked]="currentAdjustments().grayscale"
+                    (change)="onFilterChange($event, 'grayscale')"
+                    class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-600 focus:ring-sky-600 accent-sky-500">
+                  <label for="filter-grayscale" class="ml-2 block text-sm font-medium text-slate-300">Grayscale</label>
+                </div>
+                <div class="flex items-center">
+                  <input id="filter-sepia" type="checkbox" [checked]="currentAdjustments().sepia"
+                    (change)="onFilterChange($event, 'sepia')"
+                    class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-600 focus:ring-sky-600 accent-sky-500">
+                  <label for="filter-sepia" class="ml-2 block text-sm font-medium text-slate-300">Sepia</label>
+                </div>
+                <div class="flex items-center">
+                  <input id="filter-invert" type="checkbox" [checked]="currentAdjustments().invert"
+                    (change)="onFilterChange($event, 'invert')"
+                    class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-600 focus:ring-sky-600 accent-sky-500">
+                  <label for="filter-invert" class="ml-2 block text-sm font-medium text-slate-300">Invert</label>
+                </div>
+                <div class="flex items-center">
+                  <input id="filter-duotone" type="checkbox" [checked]="currentAdjustments().duotone"
+                    (change)="onFilterChange($event, 'duotone')"
+                    class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-600 focus:ring-sky-600 accent-sky-500">
+                  <label for="filter-duotone" class="ml-2 block text-sm font-medium text-slate-300">Duotone</label>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label for="blur-adjust" class="block text-sm font-medium text-slate-400 mb-1">Blur: <span
+                      class="font-bold text-sky-400">{{ currentAdjustments().blur }}px</span></label>
+                  <input id="blur-adjust" type="range" min="0" max="20" step="1" [value]="currentAdjustments().blur"
+                    (input)="onBlurChange($event)"
+                    class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+                </div>
+                <div>
+                  <label for="pixelate-adjust" class="block text-sm font-medium text-slate-400 mb-1">Pixelate: <span
+                      class="font-bold text-sky-400">{{ currentAdjustments().pixelate }}</span></label>
+                  <input id="pixelate-adjust" type="range" min="0" max="50" step="1"
+                    [value]="currentAdjustments().pixelate" (input)="onPixelateChange($event)"
+                    class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+                </div>
+                <div>
+                  <label for="vignette-adjust" class="block text-sm font-medium text-slate-400 mb-1">Vignette: <span
+                      class="font-bold text-sky-400">{{ currentAdjustments().vignette }}%</span></label>
+                  <input id="vignette-adjust" type="range" min="0" max="100" step="1"
+                    [value]="currentAdjustments().vignette" (input)="onVignetteChange($event)"
+                    class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filename Input -->
+        <div class="mb-6">
+          <label for="filename" class="block text-sm font-medium text-slate-300 mb-2">Output Filename</label>
+          <div class="flex">
+            <input id="filename" type="text" [value]="baseFileName()" (input)="onBaseFileNameChange($event)"
+              class="block w-full rounded-l-md bg-slate-900/80 border-slate-600 text-slate-200 placeholder-slate-500 focus:ring-sky-500 focus:border-sky-500 sm:text-sm p-2.5">
+            <span
+              class="inline-flex items-center px-3 text-sm text-slate-400 bg-slate-700 border border-l-0 border-slate-600 rounded-r-md">.{{
+              selectedOutputFormatInfo().extension }}</span>
+          </div>
+        </div>
+
+        <!-- Metadata Option -->
+        <div class="mb-6">
+          <div class="flex items-center">
+            <input id="strip-metadata" type="checkbox" [checked]="stripMetadata()"
+              (change)="onStripMetadataChange($event)"
+              class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-600 focus:ring-sky-600 accent-sky-500">
+            <label for="strip-metadata" class="ml-3 block text-sm font-medium text-slate-300">Strip Metadata (EXIF,
+              etc.)</label>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">Recommended for privacy. Uncheck to preserve original metadata in JPG
+            files.</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4">
+          <button (click)="convertImage()" [disabled]="isConverting()"
+            class="flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-900 disabled:bg-sky-800/50 disabled:cursor-not-allowed">
+            Convert
+          </button>
+          <button (click)="downloadImage()" [disabled]="!convertedImageSrc() || isConverting()"
+            class="flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-slate-900 disabled:bg-green-800/50 disabled:text-slate-400 disabled:cursor-not-allowed">
+            Download
+          </button>
+          <button (click)="reset()"
+            class="flex-1 inline-flex items-center justify-center px-6 py-3 border border-slate-600 text-base font-medium rounded-md shadow-sm text-slate-300 bg-slate-700 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 focus:ring-offset-slate-900">
+            Start Over
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+    }
+
+    <!-- BATCH CONVERSION MODE -->
+    @if (conversionMode() === 'batch') {
+    @if (batchFiles().length === 0) {
+    <div class="w-full max-w-3xl mx-auto">
+      <div (click)="triggerFileInput()"
+        (dragover)="$event.preventDefault(); $event.stopPropagation(); $event.dataTransfer.dropEffect = 'copy'"
+        (drop)="$event.preventDefault(); $event.stopPropagation(); onFileSelected($event)"
+        class="flex flex-col items-center justify-center w-full h-64 border-2 border-slate-600 border-dashed rounded-lg cursor-pointer bg-slate-800/50 hover:bg-slate-700/50 transition-colors duration-300">
+        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+          <svg class="w-10 h-10 mb-4 text-slate-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 20 16">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+          </svg>
+          <p class="mb-2 text-sm text-slate-400"><span class="font-semibold text-sky-400">Click to upload files</span>
+            or drag and drop</p>
+          <p class="text-xs text-slate-500">Upload multiple PNG, JPG, GIF, WEBP, TIFF</p>
+        </div>
+      </div>
+    </div>
+    } @else {
+    <div class="w-full max-w-5xl mx-auto">
+      <!-- Global Controls -->
+      <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4 md:p-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Format -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Output Format</label>
+            <div class="flex gap-2">
+              @for (format of supportedOutputFormats; track format.format) {
+              <button (click)="setOutputFormat(format.format)"
+                [class]="'px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200 flex-grow ' + (outputFormat() === format.format ? 'bg-sky-500 text-white shadow' : 'bg-slate-700 text-slate-300 hover:bg-slate-600')">
+                {{ format.label }}
+              </button>
+              }
+            </div>
+          </div>
+          <!-- Quality -->
+          <div>
+            @if (outputFormat() === 'jpeg') {
+            <label for="jpeg-quality-batch" class="block text-sm font-medium text-slate-300 mb-2">JPEG Quality: <span
+                class="font-bold text-sky-400">{{ jpegQuality() * 100 | number:'1.0-0' }}%</span></label>
+            <input id="jpeg-quality-batch" type="range" min="0.1" max="1" step="0.01" [value]="jpegQuality()"
+              (input)="onQualityChange($event, 'jpeg')"
+              class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+            }
+            @if (outputFormat() === 'webp') {
+            <label for="webp-quality-batch" class="block text-sm font-medium text-slate-300 mb-2">WEBP Quality: <span
+                class="font-bold text-sky-400">{{ webpQuality() * 100 | number:'1.0-0' }}%</span></label>
+            <input id="webp-quality-batch" type="range" min="0.1" max="1" step="0.01" [value]="webpQuality()"
+              (input)="onQualityChange($event, 'webp')"
+              class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+            }
+            @if (outputFormat() === 'avif') {
+            <label for="avif-quality-batch" class="block text-sm font-medium text-slate-300 mb-2">AVIF Quality: <span
+                class="font-bold text-sky-400">{{ avifQuality() * 100 | number:'1.0-0' }}%</span></label>
+            <input id="avif-quality-batch" type="range" min="0.1" max="1" step="0.01" [value]="avifQuality()"
+              (input)="onQualityChange($event, 'avif')"
+              class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+            }
+            @if (outputFormat() === 'png') {
+            <label for="png-compression-batch" class="block text-sm font-medium text-slate-300 mb-2">PNG Compression
+              Effort: <span class="font-bold text-sky-400">{{ pngCompressionLevel() * 10 | number:'1.0-0'
+                }}</span></label>
+            <input id="png-compression-batch" type="range" min="0" max="1" step="0.1" [value]="pngCompressionLevel()"
+              (input)="onQualityChange($event, 'png')"
+              class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
+            }
+
+            @if (outputFormat() === 'jpeg' || outputFormat() === 'webp' || outputFormat() === 'avif') {
+            <div class="mt-5 pt-4 border-t border-slate-700">
+              <label class="flex items-center space-x-2 text-sm font-medium text-slate-300 cursor-pointer mb-3">
+                <input type="checkbox" [checked]="autoCompressEnabled()" (change)="onAutoCompressEnabledChange($event)"
+                  class="w-4 h-4 rounded bg-slate-800 border-slate-600 text-sky-500 focus:ring-sky-500 focus:ring-offset-slate-900">
+                <span class="font-semibold text-sky-300">Target Auto-Compress <span
+                    class="text-xs text-slate-500 font-normal ml-1">(File Size Target)</span></span>
+              </label>
+              @if (autoCompressEnabled()) {
+              <div class="flex items-center space-x-3 bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+                <input type="number" min="1" placeholder="e.g. 200" [value]="targetFileSizeKB() || ''"
+                  (input)="onTargetFileSizeChange($event)"
+                  class="w-full bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded-md focus:ring-sky-500 focus:border-sky-500 block p-2 transition-colors">
+                <span class="text-sm text-slate-400 font-bold">KB</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-2 ml-1 leading-relaxed">Overrides the quality slider to find the
+                best possible visual quality that stays under this file size.</p>
+              }
+            </div>
+            }
+          </div>
+        </div>
+        <!-- Renaming and Resizing Options -->
+        <div class="mt-6 border-t border-slate-700 pt-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Smart Batch Renaming -->
+            <div>
+              <label for="pattern-batch" class="block text-sm font-medium text-slate-300 mb-2">Smart Batch Renaming
+                Pattern</label>
+              <input id="pattern-batch" type="text" [value]="batchNamingPattern()"
+                (input)="onBatchNamingPatternChange($event)"
+                class="w-full bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded-md focus:ring-sky-500 focus:border-sky-500 block p-2 transition-colors">
+              <p class="text-xs text-slate-500 mt-1">Use <code>&#123;original&#125;</code> and
+                <code>&#123;sequence&#125;</code> (e.g.
+                <code>vacation_&#123;sequence&#125;</code>)
+              </p>
+            </div>
+
+            <!-- Advanced Resizing Rules -->
+            <div>
+              <div class="flex items-center mb-2">
+                <input id="resize-enabled-batch" type="checkbox" [checked]="resizeEnabled()"
+                  (change)="onResizeEnabledChange($event)"
+                  class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-600 focus:ring-sky-600 accent-sky-500">
+                <label for="resize-enabled-batch" class="ml-2 block text-sm font-medium text-slate-300">Advanced
+                  Resizing Rules</label>
+              </div>
+
+              @if(resizeEnabled()) {
+              <div class="space-y-3 mt-2 bg-slate-800/40 p-3 rounded border border-slate-700/50">
+                <select [value]="resizeMode()" (change)="onResizeModeChange($event)"
+                  class="block w-full rounded-md bg-slate-900 border-slate-600 text-slate-200 focus:ring-sky-500 focus:border-sky-500 sm:text-sm p-2 mb-2">
+                  <option value="exact">Exact Dimensions</option>
+                  <option value="fit">Fit within Box Constraints</option>
+                  <option value="longestEdge">Limit Longest Edge</option>
+                </select>
+
+                @if(resizeMode() === 'longestEdge') {
+                <div>
+                  <label class="block text-xs font-medium text-slate-400 mb-1">Max Edge (px)</label>
+                  <input type="number" [value]="resizeWidth() || ''" (input)="onResizeDimensionChange($event, 'width')"
+                    placeholder="e.g. 2000"
+                    class="block w-full rounded-md bg-slate-900 border-slate-600 text-slate-200 sm:text-sm p-2">
+                </div>
+                } @else {
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Max Width (px)</label>
+                    <input type="number" [value]="resizeWidth() || ''"
+                      (input)="onResizeDimensionChange($event, 'width')" placeholder="e.g. 1920"
+                      class="block w-full rounded-md bg-slate-900 border-slate-600 text-slate-200 sm:text-sm p-2">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Max Height (px)</label>
+                    <input type="number" [value]="resizeHeight() || ''"
+                      (input)="onResizeDimensionChange($event, 'height')" placeholder="e.g. 1080"
+                      class="block w-full rounded-md bg-slate-900 border-slate-600 text-slate-200 sm:text-sm p-2">
+                  </div>
+                </div>
+                }
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Metadata Option -->
+        <div class="mt-6 border-t border-slate-700 pt-6">
+          <div class="flex items-center">
+            <input id="strip-metadata-batch" type="checkbox" [checked]="stripMetadata()"
+              (change)="onStripMetadataChange($event)"
+              class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-600 focus:ring-sky-600 accent-sky-500">
+            <label for="strip-metadata-batch" class="ml-3 block text-sm font-medium text-slate-300">Strip Metadata
+              (EXIF, etc.)</label>
+          </div>
+          <p class="text-xs text-slate-500 mt-1 ml-7">Recommended for privacy. Uncheck to preserve original metadata
+            in
+            JPG files.</p>
+        </div>
+
+        <!-- AI Toolkit (Batch) -->
+        <div class="mt-6 border-t border-slate-700 pt-6">
+          <h3 class="block text-sm font-medium text-slate-300 mb-3">AI Toolkit</h3>
+          <div class="flex items-center">
+            <input id="remove-background-batch" type="checkbox" [checked]="removeBackground()"
+              (change)="onRemoveBackgroundChange($event)"
+              class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-teal-600 focus:ring-teal-600 accent-teal-500">
+            <label for="remove-background-batch" class="ml-3 block text-sm font-medium text-slate-300">Remove
+              Background
+              🖼️</label>
+          </div>
+          <p class="text-xs text-slate-500 mt-1 ml-7 mb-4">Uses client-side AI to magically remove the background from
+            images.</p>
+
+          <div class="flex items-center pt-4 border-t border-slate-700/50">
+            <input id="remove-gemini-watermark-batch" type="checkbox" [checked]="removeGeminiWatermark()"
+              (change)="onRemoveWatermarkChange($event)"
+              class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-purple-600 focus:ring-purple-600 accent-purple-500">
+            <label for="remove-gemini-watermark-batch" class="ml-3 block text-sm font-medium text-slate-300">Remove
+              Gemini ✨ Sparkle</label>
+          </div>
+          <p class="text-xs text-slate-500 mt-1 ml-7">Mathematically removes the visible Google Gemini watermark from
+            generated images losslessly.</p>
+        </div>
+
+        <!-- Custom Watermark Section (Batch) -->
+        <div class="mt-6 border-t border-slate-700 pt-6">
+          <h3 class="block text-sm font-medium text-slate-300 mb-3">Custom Watermark</h3>
+          <div class="flex items-center mb-4">
+            <input id="add-watermark-batch" type="checkbox" [checked]="addWatermark()"
+              (change)="onAddWatermarkChange($event)"
+              class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-600 focus:ring-sky-600 accent-sky-500">
+            <label for="add-watermark-batch" class="ml-3 block text-sm font-medium text-slate-300">Add Watermark to
+              All
+              Images</label>
+          </div>
+
+          @if (addWatermark()) {
+          <div class="space-y-4 pl-7">
+            <!-- Type Selection -->
+            <div class="flex space-x-4">
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="watermark-type-batch" value="text" [checked]="watermarkType() === 'text'"
+                  (change)="onWatermarkTypeChange('text')"
+                  class="text-sky-500 focus:ring-sky-500 bg-slate-800 border-slate-600">
+                <span class="ml-2 text-sm text-slate-300">Text</span>
+              </label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="watermark-type-batch" value="image" [checked]="watermarkType() === 'image'"
+                  (change)="onWatermarkTypeChange('image')"
+                  class="text-sky-500 focus:ring-sky-500 bg-slate-800 border-slate-600">
+                <span class="ml-2 text-sm text-slate-300">Logo Image</span>
+              </label>
+            </div>
+
+            <!-- Text Settings -->
+            @if (watermarkType() === 'text') {
+            <div>
+              <label for="watermark-text-batch" class="block text-sm font-medium text-slate-400 mb-1">Text
+                Overlay</label>
+              <input id="watermark-text-batch" type="text" [value]="watermarkText()"
+                (input)="onWatermarkTextChange($event)"
+                class="block w-full rounded-md bg-slate-800 border-slate-600 text-slate-200 placeholder-slate-500 focus:ring-sky-500 focus:border-sky-500 sm:text-sm p-2">
+            </div>
+            <div>
+              <label for="watermark-color-batch" class="block text-sm font-medium text-slate-400 mb-1">Text
+                Color</label>
+              <div class="flex items-center space-x-2">
+                <input id="watermark-color-batch" type="color" [value]="watermarkColor()"
+                  (input)="onWatermarkColorChange($event)"
+                  class="h-8 w-8 rounded cursor-pointer border-0 bg-transparent">
+                <span class="text-sm text-slate-300 uppercase">{{ watermarkColor() }}</span>
+              </div>
+            </div>
+            }
+
+            <!-- Image Settings -->
+            @if (watermarkType() === 'image') {
+            <div>
+              <label class="block text-sm font-medium text-slate-400 mb-1">Upload Logo (PNG/WEBP)</label>
+              <input type="file" accept="image/png, image/webp" (change)="onWatermarkLogoUpload($event)"
+                class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-sky-500/10 file:text-sky-400 hover:file:bg-sky-500/20 cursor-pointer">
+              @if (watermarkLogoUrl()) {
+              <div class="mt-2 text-xs text-sky-400">✅ Logo loaded successfully.</div>
+              }
+            </div>
+            }
+
+            <!-- Common Settings (Position & Opacity) -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="watermark-position-batch"
+                  class="block text-sm font-medium text-slate-400 mb-1">Position</label>
+                <select id="watermark-position-batch" [value]="watermarkPosition()"
+                  (change)="onWatermarkPositionChange($event)"
+                  class="block w-full rounded-md bg-slate-800 border-slate-600 text-slate-200 focus:ring-sky-500 focus:border-sky-500 sm:text-sm p-2">
+                  <option value="bottom-right">Bottom Right</option>
+                  <option value="bottom-left">Bottom Left</option>
+                  <option value="center">Center</option>
+                </select>
+              </div>
+              <div>
+                <label for="watermark-opacity-batch" class="block text-sm font-medium text-slate-400 mb-1">Opacity: {{
+                  watermarkOpacity() * 100 | number:'1.0-0' }}%</label>
+                <input id="watermark-opacity-batch" type="range" min="0.1" max="1" step="0.05"
+                  [value]="watermarkOpacity()" (input)="onWatermarkOpacityChange($event)"
+                  class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500 mt-2">
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Batch Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-4 mb-8">
+        <button (click)="convertAllImages()" [disabled]="isConverting() || batchReadyCount() === 0"
+          class="flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 disabled:bg-sky-800/50 disabled:cursor-not-allowed">
+          {{ isConverting() ? 'Converting...' : 'Convert ' + batchReadyCount() + ' Files' }}
+        </button>
+        <button (click)="downloadAllAsZip()" [disabled]="!canDownloadZip()"
+          class="flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-green-800/50 disabled:text-slate-400 disabled:cursor-not-allowed">
+          Download {{ batchDoneCount() }} as ZIP
+        </button>
+        <button (click)="downloadAllAsCbz()" [disabled]="!canDownloadZip()"
+          class="flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-800/50 disabled:text-slate-400 disabled:cursor-not-allowed">
+          Create CBZ
+        </button>
+        <button (click)="downloadAllAsPdf()" [disabled]="!canDownloadZip()"
+          class="flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800/50 disabled:text-slate-400 disabled:cursor-not-allowed">
+          Create PDF
+        </button>
+        <button (click)="reset()"
+          class="flex-1 inline-flex items-center justify-center px-4 py-3 border border-slate-600 text-base font-medium rounded-md text-slate-300 bg-slate-700 hover:bg-slate-600">
+          Clear All
+        </button>
+      </div>
+
+      <!-- File List -->
+      <div class="space-y-3">
+        @for (item of batchFiles(); track item.id) {
+        <div class="bg-slate-800/70 p-3 rounded-lg flex items-center gap-4 border border-slate-700">
+          <div
+            class="w-16 h-16 rounded-md bg-slate-700/50 flex-shrink-0 flex items-center justify-center overflow-hidden">
+            @if(item.originalSrc) {
+            <img [src]="item.originalSrc" class="w-full h-full object-cover">
+            } @else {
+            <svg class="w-8 h-8 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+              stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
+            }
+          </div>
+          <div class="flex-grow min-w-0">
+            <p class="text-sm font-medium text-slate-200 truncate" [title]="item.file.name">{{ item.file.name }}</p>
+            @if (item.originalInfo) {
+            <p class="text-xs text-slate-400">{{ item.originalInfo.size }} &middot; {{ item.originalInfo.resolution }}
+            </p>
+            } @else {
+            <p class="text-xs text-slate-500">Loading details...</p>
+            }
+          </div>
+          <div class="flex-shrink-0 w-40 text-right">
+            @switch (item.status) {
+            @case ('loading') {
+            <span class="text-xs text-slate-400">Loading...</span>
+            }
+            @case ('ready') {
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-slate-300">Ready</span>
+            }
+            @case ('converting') {
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-900/80 text-sky-300">Converting...</span>
+            }
+            @case ('done') {
+            <div class="flex flex-col items-end">
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/80 text-green-300">Done</span>
+              @if(item.convertedInfo) {
+              <p class="text-xs text-slate-400 mt-1" [title]="item.convertedInfo.newFileName"><span
+                  class="font-semibold">{{ item.convertedInfo.newFileName }}</span> ({{ item.convertedInfo.size }})
+              </p>
+              }
+            </div>
+            }
+            @case ('error') {
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900/80 text-red-300"
+              [title]="item.errorMessage">{{ item.errorMessage || 'Error' }}</span>
+            }
+            }
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+    }
+    }
+  </div>
+
+  <!-- Crop Modal -->
+  @if (showCropModal()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md">
+    <div
+      class="bg-slate-800 rounded-xl shadow-[0_0_40px_rgba(0,0,0,0.5)] w-full max-w-5xl max-h-[95vh] flex flex-col border border-slate-700/60 overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b border-slate-700/60 bg-slate-800/80">
+        <h3 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
+          </svg>
+          Interactive Crop
+        </h3>
+        <button (click)="closeCropModal()"
+          class="text-slate-400 hover:text-white hover:bg-slate-700 rounded-full p-1 transition-colors">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div
+        class="p-6 flex-grow overflow-hidden bg-slate-900/80 flex items-center justify-center min-h-[60vh] relative pattern-checkered">
+        <div class="w-full h-full flex items-center justify-center">
+          <img id="crop-target-image" class="block max-w-full max-h-[70vh]" />
+        </div>
+      </div>
+      <div class="p-4 border-t border-slate-700/60 flex justify-between items-center bg-slate-800/90 rounded-b-xl">
+        <p class="text-xs text-slate-400 hidden sm:block">Use the handles to adjust the crop area. Double click to
+          toggle drag mode.</p>
+        <div class="flex gap-3 w-full sm:w-auto justify-end">
+          <button (click)="closeCropModal()"
+            class="px-5 py-2.5 text-sm font-medium text-slate-300 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors border border-slate-600">
+            Cancel
+          </button>
+          <button (click)="applyCrop()"
+            class="px-6 py-2.5 text-sm font-semibold text-slate-900 bg-sky-400 hover:bg-sky-300 rounded-lg shadow-[0_0_15px_rgba(56,189,248,0.3)] transition-all transform hover:scale-105">
+            Apply Crop
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Help Modal -->
+  @if (showHelpModal()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md">
+    <div
+      class="bg-slate-800 rounded-xl shadow-[0_0_40px_rgba(0,0,0,0.5)] w-full max-w-3xl max-h-[90vh] flex flex-col border border-slate-700/60 overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b border-slate-700/60 bg-slate-800/80">
+        <h3 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-sky-400" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Quick Start Guide
+        </h3>
+        <button (click)="closeHelpModal()"
+          class="text-slate-400 hover:text-white hover:bg-slate-700 rounded-full p-1 transition-colors">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto custom-scrollbar text-slate-300 space-y-6">
+
+        <section>
+          <h4 class="text-lg font-semibold text-sky-400 mb-2 border-b border-slate-700 pb-1">1. Modes of Operation
+          </h4>
+          <ul class="list-disc pl-5 space-y-2 text-sm leading-relaxed text-slate-400">
+            <li><strong>Single File:</strong> Best for granular editing, cropping, and visualizing fine-tuned
+              adjustments before downloading.</li>
+            <li><strong>Batch Conversion:</strong> Best for converting large folders of images simultaneously. It
+              utilizes web-workers to process files in parallel without freezing your browser.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h4 class="text-lg font-semibold text-sky-400 mb-2 border-b border-slate-700 pb-1">2. Core Features</h4>
+          <ul class="list-disc pl-5 space-y-2 text-sm leading-relaxed text-slate-400">
+            <li><strong>Format Support:</strong> HEIC, WebP, AVIF, PNG, JPG, TIFF, and GIF are all fully supported.
+            </li>
+            <li><strong>Clipboard (Ctrl+V):</strong> Simply copy an image anywhere on your computer and hit <code
+                class="bg-slate-700 px-1 rounded">Ctrl+V</code> while looking at this page to instantly load it!</li>
+            <li><strong>Auto-Compress Target:</strong> Specific a file size limit (e.g. 250KB) and the app will
+              logically step through qualities until it finds the absolute best appearance that perfectly fits your
+              requested size footprint.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h4 class="text-lg font-semibold text-sky-400 mb-2 border-b border-slate-700 pb-1">3. AI Toolkit</h4>
+          <ul class="list-disc pl-5 space-y-2 text-sm leading-relaxed text-slate-400">
+            <li><strong>Remove Background:</strong> Uses the <code>isnet_fp16</code> neural network running locally on
+              your hardware to isolate the subject of an image. The first load might take a second as it caches the AI
+              model to your browser.</li>
+            <li><strong>AI Super Resolution (Upscaling):</strong> Uses ONNX web to intelligently upscale small images
+              by
+              2x or 4x, maintaining sharp edges without blurring.</li>
+            <li><strong>Remove Gemini Sparkle:</strong> Losslessly calculates and extracts the Google Gemini watermark
+              from raw pixels.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h4 class="text-lg font-semibold text-sky-400 mb-2 border-b border-slate-700 pb-1">4. Privacy Guarantee</h4>
+          <p class="text-sm leading-relaxed text-slate-400">
+            This tool operates entirely on the client-side using WebAssembly (WASM). Your photos are mathematically
+            processed by your local CPU/GPU using the HTML5 Canvas API in your browser's memory. No image is ever
+            transmitted to an external server. Feel free to turn off your Wi-Fi and continue working!
+          </p>
+        </section>
+
+      </div>
+      <div class="p-4 border-t border-slate-700/60 flex justify-end items-center bg-slate-800/90 rounded-b-xl">
+        <button (click)="closeHelpModal()"
+          class="px-6 py-2.5 text-sm font-semibold text-slate-900 bg-sky-400 hover:bg-sky-300 rounded-lg shadow-[0_0_15px_rgba(56,189,248,0.3)] transition-all transform hover:scale-105">
+          Got it!
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+</main>
