@@ -19,7 +19,6 @@ This guide covers how to set up, run, and build the **Ultimate Image Converter**
     ```bash
     npm install
     ```
-    *Note: This will install Angular v19 and other required libraries. If you encounter peer dependency errors (common with AI libraries), use `npm install --legacy-peer-deps`.*
 
 3.  **Start the Development Server**:
     ```bash
@@ -33,7 +32,7 @@ This guide covers how to set up, run, and build the **Ultimate Image Converter**
 
 ## Running with Docker (Recommended)
 
-Docker provides a consistent environment and serves the application using Nginx, mimicking a production setup.
+Docker provides a consistent environment and uses Nginx to serve the application and correctly handle the extensionless WebAssembly AI model files required for background removal.
 
 1.  **Build and Run**:
     In the project root, run:

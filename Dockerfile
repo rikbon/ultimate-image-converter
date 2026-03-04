@@ -4,25 +4,26 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci
 
 COPY . .
 RUN npm run build -- --configuration=production
 
-# Stage 2: Serve the application using a Node.js server
-FROM node:20-alpine
-
-WORKDIR /app
-
-# Install 'serve' globally
-RUN npm install -g serve
+# Stage 2: Serve the application using Nginx
+FROM nginx:alpine
 
 # Copy the build artifacts from the build stage
-# Note: Angular outputs to /app/dist (based on angular.json config)
-COPY --from=build /app/dist ./dist
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Configure Nginx to route all 404s to index.html for Angular routing, and handle extensionless binary files properly
+RUN echo 'server { \
+    listen 80; \
+    location / { \
+    root /usr/share/nginx/html; \
+    try_files $uri $uri/ /index.html; \
+    } \
+    }' > /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
-# Start 'serve' on port 80, explicitly binding to all interfaces (0.0.0.0)
-# This fixes the "Connection Reset" or "Empty Response" issues caused by listening only on localhost
-CMD ["serve", "-s", "dist", "-l", "tcp://0.0.0.0:80"]
+CMD ["nginx", "-g", "daemon off;"]

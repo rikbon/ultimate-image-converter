@@ -114,6 +114,8 @@ This project is licensed under the [WTFPL](LICENSE).
 * Added advanced artistic filters: Duotone, Invert, Pixelate, and Vignette.
 * Added Interactive Compare (Before/After Slider) for viewing edits inline.
 * Added Clipboard Support (Ctrl+V) for rapid image pasting.
+* Fixed Docker implementation by migrating to Nginx to correctly serve extensionless WASM blobs.
+* Resolved `onnxruntime-web` version mismatch causing AI Background Removal to fail.
 
 ### v0.8.5
 * Added AVIF output format support.
