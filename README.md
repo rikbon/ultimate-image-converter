@@ -1,6 +1,8 @@
 # Ultimate Image Converter 🚀
 
-A modern, fast, and **100% privacy-focused** web application for converting and editing images directly in your browser. 
+A modern, fast, and **100% privacy-focused** web application for converting and editing images directly in your browser.
+
+🔗 **Live Demo:** [https://uic.rikbon.xyz/](https://uic.rikbon.xyz/)
 
 🚨 **Privacy First Guarantee:** Your images **never** leave your device. All processing, including AI Background Removal and Gemini Watermark Removal, happens completely locally using WebAssembly and Canvas APIs. No servers, no uploads, no tracking.
 
